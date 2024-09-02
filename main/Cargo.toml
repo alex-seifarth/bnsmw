@@ -1,0 +1,9 @@
+[package]
+name = "main"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "1.40", features = ["full"]}
+vsomeiprs = { path="../vsomeiprs" }
+bytes = { version = "1.7" }
