@@ -1,3 +1,13 @@
+// SPDX-License-Identifier: MPL-2.0
+//
+// Copyright (C) 2024 Alexander Seifarth
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#ifndef APPLICATION_H_
+#define APPLICATION_H_
+
 #include "vsomeipc.h"
 
 #include <vsomeip/vsomeip.hpp>
@@ -104,3 +114,5 @@ public:
     void send_error(service_id service, instance_id instance, method_id method, client_id client, session_id session,
                     major_version major, bool reliable, vsomeip::return_code_e rc);
 };
+
+#endif // APPLICATION_H_

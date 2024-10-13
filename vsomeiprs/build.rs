@@ -1,3 +1,10 @@
+// SPDX-License-Identifier: MPL-2.0
+//
+// Copyright (C) 2024 Alexander Seifarth
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 use std::{env, fs};
 use std::path::{Path, PathBuf};
 use cmake;
@@ -33,8 +40,6 @@ fn main() {
     println!("cargo::rerun-if-changed=vsomeipc/application.cpp");
     println!("cargo::rerun-if-changed=vsomeipc/CMakeLists.txt");
 
-
-
     // we're linking C++ libraris - so we need the C++ std library.
     // TODO: windows?
     if cfg!(target_os = "macos") {
@@ -43,17 +48,8 @@ fn main() {
         println!("cargo:rustc-flags=-l dylib=stdc++");
     }
 
-
-
-
-
-
     // Tell cargo to look for shared libraries in the specified directory
     //println!("cargo:rustc-link-search=/path/to/lib");
-
-    // Tell cargo to tell rustc to link the system bzip2
-    // shared library.
-    //println!("cargo:rustc-link-lib=bz2");
 
     // The bindgen::Builder is the main entry point
     // to bindgen, and lets you build up options for
