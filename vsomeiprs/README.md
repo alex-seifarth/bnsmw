@@ -12,7 +12,7 @@ The following source directories are used:
 - `src`: Contains the *Rust* API and its implementation of *vsomeiprs*.
 - `build.rs`: Custom build script to build `vsomeipc` and generate the ffi bindings.
 
-## Customized Location of *vsomeip*
+## Customized Location and Version of *vsomeip*
 
 The *vsomeipc* C/C++ library that *vsomeiprs* links to requires the *vomeip* library. The `CMakeList.txt` of *vsomeiprs* allos to spevify a custom location by having a `local.cmake` file either in this directory or one directory higher.
 
@@ -22,4 +22,9 @@ For example if an alternative installation of resource is done in `Documents/dev
 ```bash 
 # local.cmake
 set(vsomeip3_ROOT "/home/<user>/Documents/dev/usr")
+```
+Similarly, it is possible to specify a custom version 
+for vsomeip. In this case the variable `vsomeip_VERSION` must be set in the `local.cmake` file, for example:
+```bash 
+set(vsomeip_VERSION "3.4")
 ```
