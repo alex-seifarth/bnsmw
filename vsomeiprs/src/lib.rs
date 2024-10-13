@@ -13,6 +13,7 @@ use std::fmt::{Debug, Formatter};
 use std::time::Duration;
 use bytes::Bytes;
 use tokio::sync::mpsc::{UnboundedReceiver, UnboundedSender};
+use tokio::time::timeout;
 
 mod ffi {
     #![allow(non_upper_case_globals)]
@@ -29,12 +30,53 @@ pub enum VSomeipMessage {
     Message(MessageType)
 }
 
-/// Wraps a vsomeip::application object from the C++ world.
-/// Via `create()` and `drop()` this implements a RAII pattern - the creation immediately
-/// creates the vsomeip application object, initializes and starts it. At 'destruction' (i.e.
-/// `drop()`) the application is stopped (joins the I/O threads), removes it from the runtime and
-/// finally deletes the application object. Most of this is implemented in the C++ part of the
-/// library.
+/// Waits until a `RegistrationState(true)` message is received or a timeout occurs.
+pub async fn wait_registered_for(timeout_time: Duration, recv: &mut UnboundedReceiver<VSomeipMessage>) -> bool {
+    timeout(timeout_time, async {
+        loop {
+            match recv.recv().await {
+                Some(VSomeipMessage::RegistrationState(true)) => break,
+                _ => {}
+            }
+        }
+    }).await.is_ok()
+}
+
+/// A [VSomeipApplication] object provides the *Rust* interface for a vsomeip application.
+///
+/// # Creation and basic Usage
+/// An application is created together with its associated receiver of [VSomeipMessage] in the
+/// [VSomeipApplication::create()] method. The application must be given a unique name (unique with the
+/// process) and then it should be waited until it is registered with the local vsomeip routing
+/// manager:
+/// ```rust
+/// use std::time::Duration;
+/// use tokio::sync::mpsc::UnboundedReceiver;
+/// use vsomeiprs::{wait_registered_for, VSomeipApplication, VSomeipMessage};
+///
+/// async fn setup_app(name: &str) -> (VSomeipApplication, UnboundedReceiver<VSomeipMessage>)
+/// {
+///     let (mut app, mut recv) = VSomeipApplication::create("my-app")
+///                 .expect("Failed to create application");
+///     assert!(wait_registered_for(Duration::from_secs(5), &mut recv).await); // fail if not registered within 5 seconds
+///     (app, recv)
+/// }
+/// ```
+///
+/// After that the application object can be used to
+/// - request service and events (SOME/IP consumer),
+/// - offer services and events (SOME/IP provider),
+/// - send and receive (via the receiver object) SOME/IP messages.
+///
+/// # Internal
+/// With the create method the vsomeip application object will be created, initialized and started
+/// (with an extra start-thread). The handlers for registration state and for incoming messages
+/// will also immediately be installed. (The availability handlers will be installed with the
+/// service request method.)
+///
+/// The [drop()] method of [VSomeipApplication] will revert all of these, i.e. remove all handlers,
+/// stop the start-thread and wait for it to complete and then remove the vsomeip application
+/// object.
 pub struct VSomeipApplication {
     app: ffi::application_t,
     sender2: Box<UnboundedSender<VSomeipMessage>>,
@@ -57,8 +99,7 @@ impl VSomeipApplication {
     /// - returns the application and the channel receiver
     ///
     /// # Args
-    /// - name    The name of the application object. Note that vsomeip might modify it if not
-    ///           unique.
+    /// - `name` - The name of the application object. Note that vsomeip might modify it if not unique.
     ///
     /// # Returns
     /// The application object and the channel receiver are returned in case of success (OK).
@@ -133,6 +174,7 @@ impl VSomeipApplication {
         }
     }
 
+    /// Offers an event.
     pub fn offer_event(&self,  service_id: ServiceID, instance_id: InstanceID, notifier_id: MethodID,
                         event_groups: Vec<EventGroupID>,
                         is_field: bool,
@@ -150,6 +192,7 @@ impl VSomeipApplication {
         }
     }
 
+    /// Offers an event with a single event group.
     pub fn offer_event_seg(&self,  service_id: ServiceID, instance_id: InstanceID, notifier_id: MethodID,
                        event_group: EventGroupID,
                        is_field: bool,
@@ -161,6 +204,7 @@ impl VSomeipApplication {
                         cycle, change_resets_cycle, update_on_change)
     }
 
+    /// Stops offering of an event.
     pub fn stop_offer_event(&self, service_id: ServiceID, instance_id: InstanceID, notifier_id: MethodID)
     {
         unsafe {
@@ -362,7 +406,6 @@ fn return_code_to_ffi(rc: ReturnCode) -> ffi::return_code {
         ReturnCode::Unknown => ffi::return_code_E_UNKNOWN,
     }
 }
-
 
 extern "C"
 fn message_handler2(
