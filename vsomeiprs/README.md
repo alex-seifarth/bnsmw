@@ -26,5 +26,6 @@ set(vsomeip3_ROOT "/home/<user>/Documents/dev/usr")
 Similarly, it is possible to specify a custom version 
 for vsomeip. In this case the variable `vsomeip_VERSION` must be set in the `local.cmake` file, for example:
 ```bash 
+# local.cmake
 set(vsomeip_VERSION "3.4")
 ```
