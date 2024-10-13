@@ -26,7 +26,7 @@ foreach(lcp ${LOCAL_CMAKE_PATHS})
 endforeach()
 
 # find dependencies
-find_package(vsomeip3 3.4 REQUIRED CONFIG)
+find_package(vsomeip3 3.5 REQUIRED CONFIG)
 get_target_property(VSOMEIP3_LOCATION vsomeip3 LOCATION)
 
 # logging of configuration
