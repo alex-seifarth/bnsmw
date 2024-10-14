@@ -24,7 +24,7 @@ jobs:
     - name: Checkout C++/C tools
       run: |
         apt-get update
-        apt-get install -y build-essential clang-18
+        apt-get install -y build-essential clang-18 cmake
     - name: Build
       run: cargo build --verbose
     - name: Run tests
