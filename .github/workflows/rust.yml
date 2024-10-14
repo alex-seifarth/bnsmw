@@ -1,0 +1,31 @@
+name: Rust Test
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+    container:
+        image: ghcr.io/alex-seifarth/vsomeip:1.0
+        credentials:
+            username: alex-seifarth
+            password: ${{  secrets.DOCKER_WRITE_TOKEN }}
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions-rust-lang/setup-rust-toolchain@v1
+    - name: Checkout C++/C tools
+      run: |
+        apt-get update
+        apt-get install -y build-essential clang-18 cmake
+    - name: Build
+      run: cargo build --verbose
+    - name: Run tests
+      run: cargo test --verbose
